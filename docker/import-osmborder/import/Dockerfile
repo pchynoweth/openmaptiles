@@ -1,4 +1,4 @@
-FROM openmaptiles/postgis:2.9
+FROM pchynoweth/postgis:latest
 ENV IMPORT_DIR=/import
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
