@@ -27,7 +27,7 @@ RUN apt-get -qq -y update \
         xsltproc \
         # PostGIS build dependencies
             libgdal-dev \
-            libjson0-dev \
+            libjson-c-dev \
             libproj-dev \
             libxml2-dev \
             postgresql-server-dev-$PG_MAJOR \
