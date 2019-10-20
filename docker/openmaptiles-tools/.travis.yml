@@ -1,0 +1,12 @@
+sudo: required
+dist: trusty
+language: bash
+
+services:
+  - docker
+
+script:
+  - set -e
+  - docker info
+  - make test
+  - docker images

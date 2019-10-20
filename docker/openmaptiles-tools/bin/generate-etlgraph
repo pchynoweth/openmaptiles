@@ -1,0 +1,85 @@
+#!/usr/bin/env python
+"""
+Usage:
+  generate-etlgraph <layer-definition>  <output-path>
+  generate-etlgraph --help
+  generate-etlgraph --version
+Options:
+  --help                Show this screen.
+  --version             Show version.
+"""
+from docopt import docopt
+import os.path
+import distutils.spawn
+import openmaptiles
+from openmaptiles.tileset import Layer
+
+
+def collect_etldot(layer):
+    dot = ('digraph G\n'
+           '{\n'
+           '/* generated from the source code [ by generate-etlgraph  v' + openmaptiles.__version__ + '}  */ \n'
+                                                                                                      'rankdir=LR;\n')
+
+    layer_name = layer['layer']['id']
+    dot += '\n'
+    for mappingstr in layer.imposm_mappings_str:
+        for line in mappingstr.splitlines():
+            sline = line.strip(' \t\n\r')
+            if sline[:9] == '# etldoc:':
+                dot += sline[9:].strip(' \t\n\r') + '\n'
+
+    for schema in layer.schemas:
+        for line in schema.splitlines():
+            sline = line.strip(' \t\n\r')
+            if sline[:10] == '-- etldoc:':
+                dot += sline[10:].strip(' \t\n\r') + '\n'
+    dot += '\n}\n'
+    return dot
+
+
+if __name__ == '__main__':
+    args = docopt(__doc__, version=openmaptiles.__version__)
+    layer = Layer.parse(args['<layer-definition>'])
+
+    layer_path, layer_filename = os.path.split(args['<layer-definition>'])
+
+    # add a prefix for a new .dot,.png,.svg file
+    dotbasefile = os.path.join(args['<output-path>'], 'etl_' + layer_filename.split('.')[0])
+
+    dot_filename = dotbasefile + '.dot'
+    old_dot = ''
+
+    print(args['<output-path>'])
+    print(dot_filename)
+
+    layer = Layer.parse(args['<layer-definition>'])
+    etldoc = collect_etldot(layer)
+
+    # IF exists THEN read the old .dot content
+    if os.path.isfile(dot_filename):
+        with open(dot_filename, 'r') as dot_file_r:
+            old_dot = dot_file_r.read()
+            dot_file_r.close()
+
+    # Content is changed ?
+    if etldoc.strip(' \t\n\r') == old_dot.strip(' \t\n\r'):
+        print(f"Not changed dotfile : {layer['layer']['id']}\n")
+    else:
+        if old_dot == '':
+            print(f"Create dotfile : {layer['layer']['id']}")
+        else:
+            print(f"Update dotfile: {layer['layer']['id']}")
+
+        # Write a new dot file
+        with open(dot_filename, 'wt', encoding='utf-8') as dot_file_w:
+            dot_file_w.write(etldoc)
+
+        # Generate png and svg
+        if distutils.spawn.find_executable('dot'):
+            os.system(f"dot -Tpng {dotbasefile}.dot -o {dotbasefile}.png")
+            os.system(f"dot -Tsvg {dotbasefile}.dot -o {dotbasefile}.svg")
+            print(f"Generated : {dotbasefile} (.dot .svg) ")
+        else:
+            print('Warning: Could not find the `dot` command, check the graphviz installation!')
+        print('')
