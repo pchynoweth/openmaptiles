@@ -1,5 +1,4 @@
 FROM pchynoweth/postgis:latest
-MAINTAINER "Lukas Martinelli <me@lukasmartinelli.ch>"
 
 ENV IMPORT_DATA_DIR=/import \
     NATURAL_EARTH_DB=/import/natural_earth_vector.sqlite
@@ -11,7 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       wget \
       unzip \
       sqlite3 \
-    && wget --quiet http://naciscdn.org/naturalearth/packages/natural_earth_vector.sqlite.zip \
+    && wget --no-check-certificate --quiet http://naciscdn.org/naturalearth/packages/natural_earth_vector.sqlite.zip \
     && unzip -oj natural_earth_vector.sqlite.zip -d /import \
     && rm natural_earth_vector.sqlite.zip \
     && /usr/src/app/clean-natural-earth.sh \
