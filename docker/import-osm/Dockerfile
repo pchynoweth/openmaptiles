@@ -1,13 +1,12 @@
-FROM golang:1.8
-MAINTAINER "Lukas Martinelli <me@lukasmartinelli.ch>"
+FROM golang:1.13.3-buster
 
 ENV PG_MAJOR 9.6
 RUN apt-key adv --keyserver ha.pool.sks-keyservers.net --recv-keys B97B0AFCAA1A47F044F244A07FCC7D46ACCC4CF8 \
- && echo 'deb http://apt.postgresql.org/pub/repos/apt/ jessie-pgdg main' $PG_MAJOR > /etc/apt/sources.list.d/pgdg.list \
- && echo 'deb http://httpredir.debian.org/debian jessie-backports main contrib' > /etc/apt/sources.list.d/backports.list \
+ && echo 'deb http://apt.postgresql.org/pub/repos/apt/ buster-pgdg main' $PG_MAJOR > /etc/apt/sources.list.d/pgdg.list \
+ && echo 'deb http://httpredir.debian.org/debian buster-backports main contrib' > /etc/apt/sources.list.d/backports.list \
  && DEBIAN_FRONTEND=noninteractive apt-get update \
- # install newer packages from backports 
- && DEBIAN_FRONTEND=noninteractive apt-get  -t jessie-backports install -y --no-install-recommends \
+ # install newer packages from backports
+ && DEBIAN_FRONTEND=noninteractive apt-get  -t buster-backports install -y --no-install-recommends \
       libgeos-dev \
       libleveldb-dev \
       libprotobuf-dev \
@@ -22,7 +21,7 @@ RUN apt-key adv --keyserver ha.pool.sks-keyservers.net --recv-keys B97B0AFCAA1A4
  # add  github.com/julien-noblet/download-geofabrik
 RUN go get github.com/julien-noblet/download-geofabrik \
  && go install  github.com/julien-noblet/download-geofabrik \
- && download-geofabrik update \
+ && download-geofabrik generate \
  # add  github.com/lukasmartinelli/pgclimb
  && go get github.com/lukasmartinelli/pgclimb \
  && go install github.com/lukasmartinelli/pgclimb \
@@ -30,13 +29,13 @@ RUN go get github.com/julien-noblet/download-geofabrik \
  && mkdir -p $GOPATH/src/github.com/omniscale/imposm3 \
  && cd  $GOPATH/src/github.com/omniscale/imposm3 \
  && go get github.com/tools/godep \
- # && git clone --quiet --depth 1 https://github.com/omniscale/imposm3 \
+ && git clone --quiet --depth 1 https://github.com/omniscale/imposm3.git -b v0.8.1 \
  #
  # update to current omniscale/imposm3
- && git clone --quiet --depth 1 https://github.com/openmaptiles/imposm3.git -b v2017-10-18 \
+ # && git clone --quiet --depth 1 https://github.com/openmaptiles/imposm3.git \
         $GOPATH/src/github.com/omniscale/imposm3 \
  && make build \
- && mv imposm3 /usr/bin/imposm3 \
+ && mv imposm /usr/bin/imposm \
  # clean
  && rm -rf $GOPATH/bin/godep \
  && rm -rf $GOPATH/src/ \
